@@ -1,0 +1,237 @@
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>MyTabPanel</title>
+  <link rel="stylesheet" type="text/css" href="./resources/css/ext-all.css" />
+  <script type="text/javascript" src="./adapter/ext/ext-base.js"></script>
+  <script type="text/javascript" src="./ext-all.js"></script>
+  <script type="text/javascript">
+    Ext.onReady(function () {
+
+
+      var editMenu = new Ext.menu.Menu({
+        items: [{
+          text: 'reset',
+          handler: function (item, e) {
+            Ext.getCmp('infoFormPanel').hide();
+            tablePanelReset()
+          }
+        }]
+      });
+
+      var insertMenu = new Ext.menu.Menu({
+        items: [{
+          text: 'table',
+          handler: function (item, e) {
+            Ext.getCmp('infoFormPanel').show();
+          }
+        }]
+      });
+
+      var toolbar = new Ext.Toolbar({
+        items: [{
+            text: 'Edit',
+            menu: editMenu
+          },
+          '-', {
+            text: 'insert',
+            menu: insertMenu
+          }
+        ]
+      })
+
+
+      var infoFormPanel = new Ext.form.FormPanel({
+        id: 'infoFormPanel',
+        width: 300,
+        height: 300,
+        title: '输入信息',
+        // hidden:true,
+        items: [{
+          xtype: 'textfield',
+          id: 'rowField',
+          fieldLabel: 'row',
+          emptyText: 'please input row',
+          width: 180,
+        }, {
+          xtype: 'textfield',
+          id: 'colField',
+          fieldLabel: 'col',
+          emptyText: 'please input col',
+          width: 180,
+        }],
+        buttons: [{
+          text: 'submit',
+          handler: function () {
+            console.log('hhh')
+            rowNum = Ext.getCmp('rowField').getValue();
+            colNum = Ext.getCmp('colField').getValue();
+            if (Ext.isEmpty(rowNum) || !Ext.isNumber(parseInt(rowNum)) ||
+              Ext.isEmpty(colNum) || !Ext.isNumber(parseInt(colNum))) {
+              Ext.Msg.alert('提示', 'Please input correct number!');
+            } else {
+              var tmpStr = createTpl(rowNum, colNum)
+              createTablePanel(tmpStr)
+              clearInfoFormPanel()
+            }
+          }
+        }]
+      })
+
+      function clearInfoFormPanel() {
+        Ext.getCmp('rowField').setValue('')
+        Ext.getCmp('colField').setValue('')
+        Ext.getCmp('infoFormPanel').hide();
+      }
+
+      function createTpl(row, col) {
+        var templateBody = drawTable(row, col);
+        return templateBody;
+      }
+
+      function createTablePanel(tableStr) {
+        tablePanel = new Ext.Panel({
+          id: 'tablePanel',
+          renderTo: document.body,
+          floating: true,
+          border: false,
+          shadow: false,
+          tpl: new Ext.XTemplate([
+            tableStr,
+          ]),
+          data: [],
+          pageX: 450,
+          pageY: 50,
+          width: 500,
+          height: 200,
+          items: [{
+            xtype: 'button',
+            id: 'reply',
+            text: 'reply',
+            listeners: {
+              'click': function () {
+                progressBar.show();
+                progressBar.wait({
+                  interval: 200,
+                  duration: 3000,
+                  increment: 15,
+                  text: 'loading...',
+                  scope: this,
+                  fn: function () {
+                    progressBar.hide();
+                    tablePanelReset();
+                    Ext.Msg.alert('success', "success!")
+                  }
+                });
+              }
+            }
+          }]
+        });
+      }
+
+      function drawTable(rowNum, colNum) {
+        var tbody = '<table border = 1>';
+        for (i = 0; i < rowNum; i++) {
+          tbody += '<tr>';
+          for (j = 0; j < colNum; j++) {
+            tbody += "<td>" + "(" + i + "," + j + ")" + "</td>";
+          }
+          tbody += '</tr>';
+        }
+        tbody += '</table>';
+        return tbody;
+      }
+
+      function tablePanelReset() {
+        if (Ext.getCmp('tablePanel') != null) {
+          Ext.getCmp('tablePanel').destroy();
+        }
+      }
+
+      var panel = new Ext.Panel({
+        renderTo: 'panelDiv',
+        tbar: toolbar,
+        height: 350,
+        items: [
+          infoFormPanel,
+        ]
+      })
+      var myTextArea = new Ext.form.TextArea({
+        id: 'myTextArea',
+        width: 500,
+        height: 100,
+        allowBlank: true,
+        enableKeyEvents: true,
+        listeners: {
+          keyup: function (item) {
+            if (item.valueOf().getValue().length) {
+              Ext.getCmp('replyBtnId').setDisabled(false);
+            } else {
+              Ext.getCmp('replyBtnId').setDisabled(true);
+            }
+          }
+        }
+      });
+
+      var replyForm = new Ext.form.FormPanel({
+        defaultType: 'textfield',
+        labelAlign: 'right',
+        title: 'form',
+        labelWidth: 50,
+        frame: true,
+        width: 600,
+        items: myTextArea,
+        buttons: [{
+          id: 'replyBtnId',
+          text: 'reply',
+          disabled: true,
+          handler: function () {
+            progressBar.show();
+            progressBar.wait({
+              interval: 200,
+              duration: 3000,
+              increment: 15,
+              text: 'loading...',
+              scope: this,
+              fn: function () {
+                progressBar.hide();
+                tablePanelReset();
+                Ext.getCmp('myTextArea').setValue('')
+                Ext.getCmp('replyBtnId').setDisabled(true);
+                Ext.Msg.alert('success', "success!")
+
+              }
+            });
+          }
+
+        }]
+      })
+
+      var bottomDiv = new Ext.Panel({
+        renderTo: 'bottomdiv',
+        title: 'content',
+        height: 300,
+        items: [
+          replyForm
+        ]
+      })
+
+      var progressBar = new Ext.ProgressBar({
+        renderTo: 'test1',
+        y: 250,
+        width: 700,
+        id: 'proBar',
+        hidden: true,
+      });
+    })
+  </script>
+</head>
+
+<body>
+  <div id="panelDiv"></div>
+  <div id="bottomdiv"></div>
+  <div id="test1"></div>
+</body>
+
+</html>
